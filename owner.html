@@ -7,6 +7,8 @@
 <link rel="icon" href="https://img.icons8.com/fluency/48/food-delivery.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 <style>
 :root{
   --orange:#FF5200;--orange-light:#FF6B35;--orange-pale:#FFF3EE;
@@ -471,14 +473,52 @@ body.dark .login-right{background:#1e1e1e;color:#f0f0f0}
 // ========== DATA ==========
 const OWNER_USER = { name: 'Venkat S.', email: 'owner@foodrush.in', pw: 'owner123' };
 
-const ALL_ORDERS = [
-  { id: '#FR2861', customer: 'Arun S.', items: 'Chicken Biryani × 2, Raita', amount: 520, type: 'Delivery', status: 'active', time: '8 min ago' },
-  { id: '#FR2860', customer: 'Table 4', items: 'Masala Dosa × 2, Coffee', amount: 200, type: 'Dine-in', status: 'active', time: '12 min ago' },
-  { id: '#FR2859', customer: 'Meera R.', items: 'Veg Burger × 2, Fries', amount: 360, type: 'Takeaway', status: 'active', time: '18 min ago' },
-  { id: '#FR2858', customer: 'Priya K.', items: 'Paneer Pizza × 1', amount: 220, type: 'Delivery', status: 'delivered', time: '35 min ago' },
-  { id: '#FR2857', customer: 'Karthik V.', items: 'Ghee Dosa × 2, Sambar', amount: 290, type: 'Dine-in', status: 'delivered', time: '48 min ago' },
-  { id: '#FR2856', customer: 'Anonymous', items: 'Filter Coffee × 2', amount: 80, type: 'Takeaway', status: 'cancelled', time: '1h ago' },
-];
+let ALL_ORDERS = [];
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBqAUfEuWOxlETjnKWQMkF9j9ZgKefHQ2k",
+  authDomain: "foodrush-9042e.firebaseapp.com",
+  projectId: "foodrush-9042e",
+  storageBucket: "foodrush-9042e.firebasestorage.app",
+  messagingSenderId: "235821438057",
+  appId: "1:235821438057:web:34d877a7d121da399e7ef8"
+};
+try { firebase.initializeApp(firebaseConfig); } catch(e) {}
+
+function startOwnerListener() {
+  try {
+    const db = firebase.firestore();
+    db.collection('orders').orderBy('createdAt','desc').limit(100).onSnapshot(snapshot => {
+      ALL_ORDERS = snapshot.docs.map(doc => {
+        const d = doc.data();
+        const createdAt = d.createdAt?.toDate ? d.createdAt.toDate() : new Date();
+        const minutesAgo = Math.floor((Date.now() - createdAt.getTime()) / 60000);
+        const timeStr = minutesAgo < 60 ? minutesAgo + ' min ago' : Math.floor(minutesAgo/60) + 'h ago';
+        return {
+          id: d.id || '#' + doc.id,
+          customer: d.customerName || d.customer || 'Customer',
+          items: typeof d.items === 'string' ? d.items : (d.items || []).join(', '),
+          amount: d.amount || 0,
+          type: 'Delivery',
+          status: (d.status==='new'||d.status==='preparing'||d.status==='ready') ? 'active' : d.status,
+          time: timeStr
+        };
+      });
+      updateOwnerKPIs();
+      renderOrders('all');
+    });
+  } catch(e) { console.log('Owner Firebase error:', e); }
+}
+
+function updateOwnerKPIs() {
+  const active = ALL_ORDERS.filter(o => o.status !== 'cancelled');
+  const revenue = active.reduce((s, o) => s + (o.amount || 0), 0);
+  const totalOrders = active.length;
+  document.querySelectorAll('.kpi-card.revenue .kpi-num').forEach(el => el.textContent = '₹' + revenue.toLocaleString('en-IN'));
+  document.querySelectorAll('.kpi-card.orders .kpi-num').forEach(el => el.textContent = totalOrders);
+  const badge = document.querySelector('#nav-orders .sidebar-badge');
+  if(badge) badge.textContent = ALL_ORDERS.filter(o=>o.status==='active').length;
+}
 
 const MENU_ITEMS = [
   { name: 'Chicken Biryani', cat: 'Biryani', price: 180, emoji: '🍚', available: true, sales: 42 },
@@ -546,6 +586,7 @@ function enterApp(user) {
   const today = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   document.getElementById('today-date').textContent = today;
   renderAll();
+  startOwnerListener();
   showToast('Welcome back, ' + user.name.split(' ')[0] + '! 👑');
 }
 

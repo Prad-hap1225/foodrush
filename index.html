@@ -1473,21 +1473,28 @@ function startTracking(rId,rider){
   ltmDestLat=addrData.lat;ltmDestLng=addrData.lng;
   initLiveTracking(rId||activeOrderRestId||1);
   renderTimeline(1);updateETA();updateProgress(1);updateLmiStatus('Confirmed');
-  trackInterval=setInterval(()=>{
-    etaSecs=Math.max(0,etaSecs-1);updateETA();renderLiveMap();
-    const el=35*60-etaSecs;
-    if(el>=5*60&&trackStep<2){trackStep=2;renderTimeline(2);updateProgress(2);updateLmiStatus('Preparing');showToast('👨‍🍳 Preparing your food!');}
-    if(el>=18*60&&trackStep<3){trackStep=3;renderTimeline(3);updateProgress(3);updateLmiStatus('On the way');startRiderMovement();showToast('🛵 Rider picked up your order!');}
-    if(el>=34*60&&trackStep<4){
-      trackStep=4;renderTimeline(4);updateProgress(4);updateLmiStatus('Delivered ✅');
-      const cb=document.getElementById('tracking-cancel-btn');if(cb)cb.style.display='none';
-      clearInterval(trackInterval);clearInterval(ltmMoveInterval);
-      ltmRiderLat=ltmDestLat;ltmRiderLng=ltmDestLng;ltmWpIndex=ltmWaypoints.length-1;
-      renderLiveMap();showToast('🎉 Delivered! Enjoy your meal!');
-      const order=orderHistory.find(o=>o.id===document.getElementById('oid-display').textContent);
-      if(order) order.status='delivered';
-    }
-  },1000);
+  // Listen Firestore for real-time status from employee
+  const currentOid = document.getElementById('oid-display').textContent;
+  try {
+    const db = firebase.firestore();
+    const docId = currentOid.replace('#','');
+    db.collection('orders').doc(docId).onSnapshot(doc => {
+      if(!doc.exists) return;
+      const status = doc.data().status;
+      if(status==='preparing'&&trackStep<2){trackStep=2;renderTimeline(2);updateProgress(2);updateLmiStatus('Preparing');showToast('👨‍🍳 Preparing your food!');}
+      if(status==='ready'&&trackStep<3){trackStep=3;renderTimeline(3);updateProgress(3);updateLmiStatus('On the way');startRiderMovement();showToast('🛵 Rider picked up your order!');}
+      if(status==='delivered'&&trackStep<4){
+        trackStep=4;renderTimeline(4);updateProgress(4);updateLmiStatus('Delivered ✅');
+        const cb=document.getElementById('tracking-cancel-btn');if(cb)cb.style.display='none';
+        clearInterval(trackInterval);clearInterval(ltmMoveInterval);
+        ltmRiderLat=ltmDestLat;ltmRiderLng=ltmDestLng;
+        renderLiveMap();showToast('🎉 Delivered! Enjoy your meal!');
+        const order=orderHistory.find(o=>o.id===currentOid);
+        if(order) order.status='delivered';
+      }
+    });
+  } catch(e){ console.log('Tracking listener error:',e); }
+  trackInterval=setInterval(()=>{etaSecs=Math.max(0,etaSecs-1);updateETA();renderLiveMap();},1000);
 }
 
 function updateETA(){
