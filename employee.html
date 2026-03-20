@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FoodRush Staff 🍔</title>
+<link rel="icon" href="https://img.icons8.com/fluency/48/food-delivery.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  --orange:#FF5200;--orange-light:#FF6B35;--orange-pale:#FFF3EE;
+  --dark:#1a1a1a;--dark2:#282828;--gray:#686b78;--gray-light:#f0f0f0;
+  --gray-border:#e9e9e9;--white:#fff;--green:#1BA672;--red:#e74c3c;
+  --blue:#2196F3;--purple:#7C3AED;--yellow:#F59E0B;
+  --shadow:0 2px 16px rgba(0,0,0,.10);--shadow-lg:0 8px 40px rgba(0,0,0,.13);
+  --fh:'Syne',system-ui,sans-serif;--fb:'DM Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--fb);background:#fafafa;color:var(--dark)}
+button,a{cursor:pointer}
+h1,h2,h3,h4{font-family:var(--fh)}
+
+/* LOGIN */
+#login-page{min-height:100vh;display:flex;background:var(--dark)}
+.login-left{flex:1;background:linear-gradient(135deg,rgba(124,58,237,.88),rgba(30,20,80,.92)),url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&fit=crop') center/cover;display:flex;flex-direction:column;justify-content:center;padding:60px;position:relative;overflow:hidden}
+.login-left::before{content:'';position:absolute;top:-80px;right:-80px;width:320px;height:320px;border-radius:50%;background:rgba(255,255,255,.07)}
+.login-logo{font-family:var(--fh);font-size:36px;font-weight:800;color:#fff;margin-bottom:8px}
+.login-logo span{opacity:.6}
+.login-role-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.15);color:#fff;padding:6px 16px;border-radius:20px;font-size:13px;font-weight:600;margin-bottom:24px;width:fit-content}
+.login-tagline{font-size:18px;color:rgba(255,255,255,.85);max-width:320px;line-height:1.6;margin-bottom:48px}
+.login-feat{display:flex;flex-direction:column;gap:18px}
+.login-feat-item{display:flex;align-items:center;gap:14px;color:rgba(255,255,255,.9);font-size:15px}
+.login-feat-icon{width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.login-right{width:440px;background:#fff;display:flex;flex-direction:column;justify-content:center;padding:60px 48px}
+.login-right h2{font-size:28px;font-weight:700;margin-bottom:6px}
+.login-right p{color:var(--gray);font-size:14px;margin-bottom:32px}
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em}
+.auth-input-wrap{position:relative;margin-bottom:16px}
+.auth-input-wrap input{width:100%;padding:13px 16px 13px 44px;border:1.5px solid var(--gray-border);border-radius:10px;font-size:15px;outline:none;background:#fafafa;transition:all .2s;font-family:var(--fb)}
+.auth-input-wrap input:focus{border-color:var(--purple);background:#fff;box-shadow:0 0 0 3px rgba(124,58,237,.08)}
+.auth-input-wrap .auth-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none}
+.auth-input-wrap .eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--gray)}
+.auth-error{background:#fff0f0;border:1px solid #ffcccc;border-radius:8px;padding:10px 14px;font-size:13px;color:var(--red);margin-bottom:14px;display:none}
+.auth-error.show{display:block}
+.btn-primary{width:100%;padding:14px;background:var(--purple);color:#fff;border:none;border-radius:10px;font-family:var(--fh);font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:8px}
+.btn-primary:hover{background:#6D28D9}
+.divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--gray);font-size:13px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--gray-border)}
+.role-hint{margin-top:20px;padding:12px 16px;background:#F5F3FF;border:1px solid #DDD6FE;border-radius:10px;font-size:13px;color:var(--purple)}
+.role-hint strong{font-weight:600}
+
+/* NAVBAR */
+.navbar{position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid var(--gray-border);padding:0 32px;display:flex;align-items:center;gap:16px;height:64px;box-shadow:0 1px 8px rgba(0,0,0,.06)}
+.nav-logo{font-family:var(--fh);font-size:20px;font-weight:800;color:var(--orange);cursor:pointer;white-space:nowrap}
+.nav-logo span{color:var(--dark)}
+.nav-role{background:#F5F3FF;color:var(--purple);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;font-family:var(--fh)}
+.nav-actions{margin-left:auto;display:flex;align-items:center;gap:12px}
+.nav-user{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;position:relative}
+.nav-avatar{width:36px;height:36px;border-radius:50%;background:var(--purple);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:700;font-size:15px}
+.shift-badge{background:#ECFDF5;color:#065F46;border:1px solid #A7F3D0;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600}
+.shift-badge.off{background:#FEF3C7;color:#92400E;border-color:#FDE68A}
+.nav-notif-btn{position:relative;background:none;border:1.5px solid var(--gray-border);border-radius:10px;padding:7px 12px;font-size:18px;line-height:1;transition:all .2s}
+.nav-notif-btn:hover{border-color:var(--orange);background:var(--orange-pale)}
+.notif-dot{position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--red);border:2px solid #fff}
+.user-dropdown{position:absolute;top:48px;right:0;background:#fff;border:1px solid var(--gray-border);border-radius:12px;box-shadow:var(--shadow-lg);min-width:200px;overflow:hidden;display:none;z-index:200}
+.nav-user:hover .user-dropdown{display:block}
+.user-dropdown-item{padding:12px 16px;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:all .15s}
+.user-dropdown-item:hover{background:var(--orange-pale);color:var(--orange)}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--dark);color:#fff;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:500;z-index:999;opacity:0;transition:all .3s;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* LAYOUT */
+.app-layout{display:flex;min-height:calc(100vh - 64px)}
+.sidebar{width:220px;flex-shrink:0;background:#fff;border-right:1px solid var(--gray-border);padding:20px 0;position:sticky;top:64px;height:calc(100vh - 64px);overflow-y:auto}
+.sidebar-item{display:flex;align-items:center;gap:12px;padding:12px 24px;font-size:14px;font-weight:500;color:var(--gray);cursor:pointer;transition:all .15s;position:relative}
+.sidebar-item:hover{background:var(--gray-light);color:var(--dark)}
+.sidebar-item.active{background:var(--orange-pale);color:var(--orange);font-weight:600}
+.sidebar-item.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--orange);border-radius:0 2px 2px 0}
+.sidebar-icon{font-size:18px;width:24px;text-align:center}
+.sidebar-badge{margin-left:auto;background:var(--orange);color:#fff;border-radius:20px;min-width:20px;height:20px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px;font-family:var(--fh)}
+.sidebar-section{font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;padding:16px 24px 8px;margin-top:4px}
+
+.main-content{flex:1;overflow:auto;background:#fafafa}
+.view{display:none;padding:28px 32px}
+.view.active{display:block}
+
+/* CARDS */
+.page-header{margin-bottom:24px}
+.page-header h2{font-size:22px;font-weight:800;margin-bottom:4px}
+.page-header p{color:var(--gray);font-size:14px}
+
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:28px}
+.stat-card{background:#fff;border-radius:14px;padding:18px 20px;border:1px solid var(--gray-border);box-shadow:var(--shadow)}
+.stat-icon{font-size:24px;margin-bottom:10px}
+.stat-num{font-family:var(--fh);font-size:28px;font-weight:800;color:var(--dark)}
+.stat-lbl{font-size:13px;color:var(--gray);margin-top:2px}
+.stat-trend{font-size:12px;margin-top:6px;font-weight:600}
+.stat-trend.up{color:var(--green)}.stat-trend.down{color:var(--red)}
+
+/* ORDER TICKETS */
+.ticket-board{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-bottom:24px}
+.ticket-col-header{font-family:var(--fh);font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.ticket-col-count{background:var(--gray-light);color:var(--gray);border-radius:20px;padding:2px 9px;font-size:12px;font-weight:700}
+
+.ticket{background:#fff;border-radius:14px;padding:16px;border:1px solid var(--gray-border);box-shadow:var(--shadow);margin-bottom:12px;transition:all .2s}
+.ticket:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px)}
+.ticket-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.ticket-id{font-family:var(--fh);font-size:15px;font-weight:700}
+.ticket-type{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.type-delivery{background:#EEF2FF;color:#4338CA}
+.type-dinein{background:#ECFDF5;color:#065F46}
+.type-takeaway{background:#FEF3C7;color:#92400E}
+.ticket-items{font-size:13px;color:var(--gray);line-height:1.6;margin-bottom:12px;padding:10px;background:#fafafa;border-radius:8px}
+.ticket-meta{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:12px}
+.ticket-time{color:var(--orange);font-weight:600;display:flex;align-items:center;gap:4px}
+.ticket-time.urgent{color:var(--red)}
+.ticket-customer{color:var(--gray)}
+.ticket-actions{display:flex;gap:8px}
+.btn-ticket{flex:1;padding:9px;border-radius:8px;font-family:var(--fh);font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .15s}
+.btn-accept{background:var(--purple);color:#fff}.btn-accept:hover{background:#6D28D9}
+.btn-start{background:var(--orange);color:#fff}.btn-start:hover{background:var(--orange-light)}
+.btn-done{background:var(--green);color:#fff}.btn-done:hover{background:#158558}
+.btn-ghost{background:var(--gray-light);color:var(--dark)}
+
+/* STATUS BADGE */
+.status-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.status-new{background:#EEF2FF;color:#4338CA}
+.status-preparing{background:#FEF3C7;color:#92400E}
+.status-ready{background:#ECFDF5;color:#065F46}
+.status-delivered{background:#E5E7EB;color:#374151}
+
+/* QUICK ACTIONS */
+.quick-actions{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:28px}
+.qa-btn{display:flex;align-items:center;gap:10px;padding:12px 20px;background:#fff;border:1.5px solid var(--gray-border);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;font-family:var(--fh)}
+.qa-btn:hover{border-color:var(--orange);background:var(--orange-pale);color:var(--orange)}
+.qa-btn.danger:hover{border-color:var(--red);background:#fff0f0;color:var(--red)}
+.qa-btn .qa-icon{font-size:20px}
+
+/* ATTENDANCE / SHIFT */
+.shift-card{background:#fff;border-radius:14px;padding:20px 24px;border:1px solid var(--gray-border);box-shadow:var(--shadow);margin-bottom:20px}
+.shift-card h3{font-size:16px;font-weight:700;margin-bottom:16px}
+.shift-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--gray-border)}
+.shift-row:last-child{border-bottom:none}
+.shift-label{font-size:14px;font-weight:500}
+.shift-value{font-size:14px;font-weight:600;color:var(--dark)}
+.shift-value.green{color:var(--green)}
+.shift-value.orange{color:var(--orange)}
+
+/* TIMELINE */
+.timeline{display:flex;flex-direction:column;gap:0}
+.tl-item{display:flex;gap:16px;padding-bottom:20px;position:relative}
+.tl-item:last-child{padding-bottom:0}
+.tl-item:not(:last-child)::before{content:'';position:absolute;left:17px;top:34px;bottom:0;width:2px;background:var(--gray-border)}
+.tl-dot{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;border:2px solid #fff;box-shadow:var(--shadow)}
+.tl-dot.done{background:var(--green);color:#fff}
+.tl-dot.active{background:var(--orange);color:#fff}
+.tl-dot.pending{background:var(--gray-light);color:var(--gray)}
+.tl-content{flex:1;padding-top:4px}
+.tl-title{font-size:14px;font-weight:600;margin-bottom:2px}
+.tl-desc{font-size:12px;color:var(--gray)}
+.tl-time{font-size:11px;color:var(--gray);margin-top:3px}
+
+/* PROFILE */
+.profile-card{background:#fff;border-radius:14px;padding:24px;border:1px solid var(--gray-border);box-shadow:var(--shadow)}
+.profile-avatar-lg{width:80px;height:80px;border-radius:50%;background:var(--purple);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:800;font-size:32px;margin-bottom:16px}
+.profile-name{font-size:22px;font-weight:800;margin-bottom:4px}
+.profile-role{display:inline-flex;align-items:center;gap:6px;background:#F5F3FF;color:var(--purple);padding:4px 12px;border-radius:20px;font-size:13px;font-weight:600;margin-bottom:20px}
+.profile-field{margin-bottom:14px}
+.profile-field label{display:block;font-size:11px;font-weight:700;color:var(--gray);margin-bottom:5px;text-transform:uppercase;letter-spacing:.07em}
+.profile-field input{width:100%;padding:11px 14px;border:1.5px solid var(--gray-border);border-radius:10px;font-size:14px;outline:none;font-family:var(--fb)}
+.profile-field input:focus{border-color:var(--purple)}
+.btn-save{padding:11px 28px;background:var(--purple);color:#fff;border:none;border-radius:10px;font-family:var(--fh);font-size:14px;font-weight:700;cursor:pointer}
+.btn-save:hover{background:#6D28D9}
+
+/* LEADERBOARD */
+.lb-table{width:100%;border-collapse:collapse}
+.lb-table thead tr th{padding:10px 16px;font-size:12px;font-weight:700;color:var(--gray);text-align:left;background:var(--gray-light);text-transform:uppercase;letter-spacing:.04em}
+.lb-table thead tr th:first-child{border-radius:8px 0 0 8px}
+.lb-table thead tr th:last-child{border-radius:0 8px 8px 0}
+.lb-table tbody tr td{padding:14px 16px;font-size:14px;border-bottom:1px solid var(--gray-border)}
+.lb-table tbody tr:last-child td{border-bottom:none}
+.lb-table tbody tr:hover td{background:#FAFAFA}
+.lb-rank{font-family:var(--fh);font-weight:700;font-size:16px}
+.lb-rank.gold{color:#F59E0B}.lb-rank.silver{color:#94A3B8}.lb-rank.bronze{color:#CD7C4A}
+.lb-emp{display:flex;align-items:center;gap:10px}
+.lb-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;font-family:var(--fh)}
+.rating-bar{display:flex;align-items:center;gap:8px}
+.rating-fill{height:6px;border-radius:3px;background:var(--green)}
+
+/* STOCK ALERTS */
+.stock-card{background:#fff;border-radius:12px;padding:14px 16px;border:1px solid var(--gray-border);display:flex;align-items:center;gap:12px;margin-bottom:10px;transition:all .15s}
+.stock-card:hover{box-shadow:var(--shadow)}
+.stock-indicator{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.stock-indicator.critical{background:var(--red);box-shadow:0 0 0 3px rgba(231,76,60,.2)}
+.stock-indicator.low{background:var(--yellow);box-shadow:0 0 0 3px rgba(245,158,11,.2)}
+.stock-indicator.ok{background:var(--green)}
+.stock-name{font-size:14px;font-weight:500;flex:1}
+.stock-qty{font-size:13px;font-weight:600;margin-right:8px}
+.stock-qty.critical{color:var(--red)}.stock-qty.low{color:var(--yellow)}
+.btn-restock{padding:5px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--orange);color:var(--orange);background:#fff;font-family:var(--fh);transition:all .15s}
+.btn-restock:hover{background:var(--orange);color:#fff}
+
+/* DARK MODE */
+body.dark{background:#121212;color:#f0f0f0}
+body.dark .navbar,body.dark .sidebar,body.dark .stat-card,body.dark .ticket,body.dark .shift-card,body.dark .profile-card,body.dark .stock-card{background:#1e1e1e;border-color:#333}
+body.dark .sidebar-item:hover{background:#2a2a2a}
+body.dark .sidebar-item.active{background:#2a1100}
+body.dark .qa-btn{background:#1e1e1e;border-color:#444;color:#f0f0f0}
+body.dark .ticket-items{background:#2a2a2a}
+body.dark .auth-input-wrap input,.dark .profile-field input{background:#2a2a2a;border-color:#444;color:#f0f0f0}
+body.dark .login-right{background:#1e1e1e;color:#f0f0f0}
+
+@media(max-width:768px){
+  .sidebar{display:none}
+  .view{padding:20px 16px}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .ticket-board{grid-template-columns:1fr}
+  .login-left{display:none}
+  .login-right{width:100%;padding:40px 24px}
+}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- LOGIN PAGE -->
+<div id="login-page">
+  <div class="login-left">
+    <div class="login-logo">Food<span>Rush</span></div>
+    <div class="login-role-badge">👨‍🍳 Staff Portal</div>
+    <div class="login-tagline">Manage orders, track your performance, and keep the kitchen running smooth.</div>
+    <div class="login-feat">
+      <div class="login-feat-item"><div class="login-feat-icon">📋</div>Live order queue & KDS</div>
+      <div class="login-feat-item"><div class="login-feat-icon">⏱️</div>Shift & attendance tracker</div>
+      <div class="login-feat-item"><div class="login-feat-icon">📦</div>Stock & inventory alerts</div>
+      <div class="login-feat-item"><div class="login-feat-icon">🏆</div>Performance leaderboard</div>
+    </div>
+  </div>
+  <div class="login-right">
+    <h2>Staff Login 👋</h2>
+    <p>Access your FoodRush staff dashboard</p>
+    <div id="login-error" class="auth-error"></div>
+    <div class="auth-input-wrap">
+      <span class="auth-icon">📧</span>
+      <input type="email" id="emp-email" placeholder="staff@foodrush.in" onkeydown="if(event.key==='Enter')doEmpLogin()"/>
+    </div>
+    <div class="auth-input-wrap">
+      <span class="auth-icon">🔒</span>
+      <input type="password" id="emp-pw" placeholder="Password" onkeydown="if(event.key==='Enter')doEmpLogin()"/>
+      <button class="eye-btn" onclick="togglePw('emp-pw',this)">👁️</button>
+    </div>
+    <button class="btn-primary" onclick="doEmpLogin()">Login to Dashboard →</button>
+    <div class="divider">or try demo</div>
+    <button style="width:100%;padding:12px;background:none;border:1.5px solid var(--purple);color:var(--purple);border-radius:10px;font-family:var(--fh);font-size:14px;font-weight:700;cursor:pointer" onclick="demoLogin()">🧑‍🍳 Demo: Kitchen Staff Login</button>
+    <div class="role-hint">
+      <strong>Note:</strong> This is the Staff portal. <a href="index.html" style="color:var(--purple)">Customer app →</a> | <a href="owner.html" style="color:var(--purple)">Owner dashboard →</a>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-page" style="display:none">
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-logo">Food<span>Rush</span></div>
+    <div class="nav-role">👨‍🍳 Staff</div>
+    <div class="nav-actions">
+      <span id="shift-badge" class="shift-badge">🟢 On Duty</span>
+      <button class="nav-notif-btn" onclick="showToast('🔔 3 new order alerts!')">🔔<span class="notif-dot"></span></button>
+      <div class="nav-user">
+        <div class="nav-avatar" id="nav-avatar">R</div>
+        <span id="nav-name" style="font-size:14px;font-weight:600">Staff</span>
+        <div class="user-dropdown">
+          <div class="user-dropdown-item" onclick="switchView('profile')">👤 My Profile</div>
+          <div class="user-dropdown-item" onclick="toggleDark()">🌙 Dark Mode</div>
+          <div class="user-dropdown-item" onclick="doLogout()" style="color:var(--red)">🚪 Logout</div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="app-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-section">Main</div>
+      <div class="sidebar-item active" id="nav-dashboard" onclick="switchView('dashboard')"><span class="sidebar-icon">🏠</span> Dashboard</div>
+      <div class="sidebar-item" id="nav-orders" onclick="switchView('orders')"><span class="sidebar-icon">📋</span> Orders <span class="sidebar-badge" id="order-badge">3</span></div>
+      <div class="sidebar-item" id="nav-kitchen" onclick="switchView('kitchen')"><span class="sidebar-icon">👨‍🍳</span> Kitchen KDS</div>
+      <div class="sidebar-section">My Work</div>
+      <div class="sidebar-item" id="nav-shift" onclick="switchView('shift')"><span class="sidebar-icon">⏱️</span> My Shift</div>
+      <div class="sidebar-item" id="nav-performance" onclick="switchView('performance')"><span class="sidebar-icon">📊</span> Performance</div>
+      <div class="sidebar-section">Support</div>
+      <div class="sidebar-item" id="nav-stock" onclick="switchView('stock')"><span class="sidebar-icon">📦</span> Stock Alerts</div>
+      <div class="sidebar-item" id="nav-profile" onclick="switchView('profile')"><span class="sidebar-icon">👤</span> Profile</div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main-content">
+
+      <!-- DASHBOARD VIEW -->
+      <div class="view active" id="view-dashboard">
+        <div class="page-header">
+          <h2>Good morning, <span id="welcome-name">Ravi</span>! 👋</h2>
+          <p id="today-date">Today, loading...</p>
+        </div>
+
+        <div class="quick-actions">
+          <button class="qa-btn" onclick="toggleOnDuty()"><span class="qa-icon">🟢</span> <span id="duty-btn-text">Go on Break</span></button>
+          <button class="qa-btn" onclick="switchView('kitchen')"><span class="qa-icon">📺</span> Open KDS</button>
+          <button class="qa-btn" onclick="switchView('stock')"><span class="qa-icon">⚠️</span> Stock Alerts</button>
+          <button class="qa-btn danger" onclick="showToast('🆘 Manager notified!')"><span class="qa-icon">🆘</span> Call Manager</button>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-num" id="st-done">14</div><div class="stat-lbl">Orders done today</div><div class="stat-trend up">↑ 3 more than yesterday</div></div>
+          <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-num" id="st-pending">3</div><div class="stat-lbl">In queue now</div><div class="stat-trend">New orders incoming</div></div>
+          <div class="stat-card"><div class="stat-icon">⚡</div><div class="stat-num" id="st-avgtime">16m</div><div class="stat-lbl">Avg prep time</div><div class="stat-trend up">↑ 2m faster than goal</div></div>
+          <div class="stat-card"><div class="stat-icon">⭐</div><div class="stat-num" id="st-rating">4.8</div><div class="stat-lbl">Today's rating</div><div class="stat-trend up">↑ Great work!</div></div>
+        </div>
+
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:12px">🔥 Active Orders (3)</h3>
+        <div id="active-tickets-dash"></div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px">
+          <div class="shift-card">
+            <h3>Today's Shift</h3>
+            <div class="shift-row"><span class="shift-label">Shift</span><span class="shift-value green">10:00 AM – 6:00 PM</span></div>
+            <div class="shift-row"><span class="shift-label">Clocked in</span><span class="shift-value">9:58 AM ✓</span></div>
+            <div class="shift-row"><span class="shift-label">Hours done</span><span class="shift-value orange" id="hours-done">0h 0m</span></div>
+            <div class="shift-row"><span class="shift-label">Break taken</span><span class="shift-value">0 of 30 min</span></div>
+          </div>
+          <div class="shift-card">
+            <h3>This Week</h3>
+            <div class="shift-row"><span class="shift-label">Mon</span><span class="shift-value green">✓ 8h</span></div>
+            <div class="shift-row"><span class="shift-label">Tue</span><span class="shift-value green">✓ 8h</span></div>
+            <div class="shift-row"><span class="shift-label">Wed</span><span class="shift-value green">✓ 7.5h</span></div>
+            <div class="shift-row"><span class="shift-label">Thu (Today)</span><span class="shift-value orange">In progress</span></div>
+            <div class="shift-row"><span class="shift-label">Fri</span><span class="shift-value" style="color:var(--gray)">Scheduled</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ORDERS VIEW -->
+      <div class="view" id="view-orders">
+        <div class="page-header">
+          <h2>Order Queue 📋</h2>
+          <p>All incoming and active orders — update status in real time</p>
+        </div>
+        <div class="quick-actions" style="margin-bottom:16px">
+          <button class="qa-btn" onclick="filterOrders('all')" id="filter-all" style="border-color:var(--orange);color:var(--orange)"><span class="qa-icon">📋</span> All Orders</button>
+          <button class="qa-btn" onclick="filterOrders('new')" id="filter-new"><span class="qa-icon">🆕</span> New</button>
+          <button class="qa-btn" onclick="filterOrders('preparing')" id="filter-preparing"><span class="qa-icon">🍳</span> Preparing</button>
+          <button class="qa-btn" onclick="filterOrders('ready')" id="filter-ready"><span class="qa-icon">✅</span> Ready</button>
+        </div>
+        <div id="orders-list"></div>
+      </div>
+
+      <!-- KITCHEN KDS VIEW -->
+      <div class="view" id="view-kitchen">
+        <div class="page-header">
+          <h2>Kitchen Display 👨‍🍳</h2>
+          <p>Real-time order cards — mark items as done</p>
+        </div>
+        <div style="background:var(--dark);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;margin-bottom:20px;display:flex;align-items:center;gap:8px">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse 1.2s infinite"></span>
+          KDS Live — <strong id="kds-count">3</strong> orders pending
+          <button onclick="showToast('🔔 Order bell rang!')" style="margin-left:auto;background:var(--orange);border:none;color:#fff;padding:5px 14px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--fh)">🔔 Ring Bell</button>
+        </div>
+        <div id="kds-board" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px"></div>
+      </div>
+
+      <!-- SHIFT VIEW -->
+      <div class="view" id="view-shift">
+        <div class="page-header">
+          <h2>My Shift ⏱️</h2>
+          <p>Attendance, breaks, and weekly schedule</p>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="shift-card">
+            <h3>Clock Status</h3>
+            <div style="text-align:center;padding:20px 0">
+              <div style="font-size:48px;margin-bottom:8px">🟢</div>
+              <div style="font-size:20px;font-weight:700;margin-bottom:4px" id="shift-status-text">On Duty</div>
+              <div style="font-size:14px;color:var(--gray)" id="clock-in-time">Clocked in at 9:58 AM</div>
+              <div style="font-size:32px;font-weight:800;font-family:var(--fh);color:var(--orange);margin:16px 0" id="live-clock">00:00:00</div>
+            </div>
+            <button class="btn-primary" onclick="toggleOnDuty()" style="background:var(--orange);margin-top:0" id="duty-toggle-btn">Take a Break</button>
+          </div>
+          <div class="shift-card">
+            <h3>This Week's Schedule</h3>
+            <div class="timeline">
+              <div class="tl-item"><div class="tl-dot done">✓</div><div class="tl-content"><div class="tl-title">Monday</div><div class="tl-desc">10 AM – 6 PM</div><div class="tl-time">8h completed</div></div></div>
+              <div class="tl-item"><div class="tl-dot done">✓</div><div class="tl-content"><div class="tl-title">Tuesday</div><div class="tl-desc">10 AM – 6 PM</div><div class="tl-time">8h completed</div></div></div>
+              <div class="tl-item"><div class="tl-dot done">✓</div><div class="tl-content"><div class="tl-title">Wednesday</div><div class="tl-desc">12 PM – 8 PM</div><div class="tl-time">7.5h completed</div></div></div>
+              <div class="tl-item"><div class="tl-dot active">→</div><div class="tl-content"><div class="tl-title">Thursday (Today)</div><div class="tl-desc">10 AM – 6 PM</div><div class="tl-time">In progress</div></div></div>
+              <div class="tl-item"><div class="tl-dot pending">5</div><div class="tl-content"><div class="tl-title">Friday</div><div class="tl-desc">10 AM – 6 PM</div><div class="tl-time">Scheduled</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PERFORMANCE VIEW -->
+      <div class="view" id="view-performance">
+        <div class="page-header">
+          <h2>My Performance 📊</h2>
+          <p>Track your speed, ratings & weekly rankings</p>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-icon">🏆</div><div class="stat-num">#1</div><div class="stat-lbl">Team ranking this week</div><div class="stat-trend up">↑ Up from #3 last week</div></div>
+          <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-num">72</div><div class="stat-lbl">Orders this week</div><div class="stat-trend up">↑ Personal best!</div></div>
+          <div class="stat-card"><div class="stat-icon">⭐</div><div class="stat-num">4.8</div><div class="stat-lbl">Average rating</div><div class="stat-trend up">↑ 0.2 vs last week</div></div>
+          <div class="stat-card"><div class="stat-icon">⚡</div><div class="stat-num">16m</div><div class="stat-lbl">Avg prep time</div><div class="stat-trend up">↑ 4m faster than avg</div></div>
+        </div>
+
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:16px">🏆 Team Leaderboard — This Week</h3>
+        <div class="shift-card" style="overflow:auto">
+          <table class="lb-table">
+            <thead><tr><th>#</th><th>Staff</th><th>Role</th><th>Orders</th><th>Avg Time</th><th>Rating</th></tr></thead>
+            <tbody id="lb-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- STOCK VIEW -->
+      <div class="view" id="view-stock">
+        <div class="page-header">
+          <h2>Stock Alerts 📦</h2>
+          <p>Report low stock items to manager instantly</p>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div>
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;color:var(--red)">🚨 Critical — Needs Immediate Restock</h3>
+            <div id="critical-stock"></div>
+          </div>
+          <div>
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;color:var(--yellow)">⚠️ Low Stock — Running Low</h3>
+            <div id="low-stock"></div>
+          </div>
+        </div>
+        <div style="margin-top:24px">
+          <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;color:var(--green)">✅ Well Stocked</h3>
+          <div id="ok-stock"></div>
+        </div>
+      </div>
+
+      <!-- PROFILE VIEW -->
+      <div class="view" id="view-profile">
+        <div class="page-header">
+          <h2>My Profile 👤</h2>
+          <p>Update your info and preferences</p>
+        </div>
+        <div style="max-width:480px">
+          <div class="profile-card">
+            <div class="profile-avatar-lg" id="profile-avatar-big">R</div>
+            <div class="profile-name" id="profile-name-big">Ravi Kumar</div>
+            <div class="profile-role">👨‍🍳 Kitchen Staff</div>
+            <div class="profile-field"><label>Full Name</label><input type="text" id="p-name" value="Ravi Kumar"/></div>
+            <div class="profile-field"><label>Phone</label><input type="tel" id="p-phone" value="+91 98765 43210"/></div>
+            <div class="profile-field"><label>Email</label><input type="email" id="p-email" value=""/></div>
+            <div class="profile-field"><label>Emergency Contact</label><input type="tel" id="p-emergency" placeholder="+91 XXXXXXXXXX"/></div>
+            <button class="btn-save" onclick="saveProfile()">Save Changes ✓</button>
+            <button onclick="doLogout()" style="margin-left:12px;padding:11px 20px;background:none;border:1.5px solid var(--red);color:var(--red);border-radius:10px;font-family:var(--fh);font-size:14px;font-weight:700;cursor:pointer">🚪 Logout</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<style>
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(27,166,114,.5)}50%{box-shadow:0 0 0 6px rgba(27,166,114,0)}}
+</style>
+
+<script>
+// ========== DATA ==========
+let empUser = null;
+let onDuty = true;
+let clockInTime = new Date();
+clockInTime.setHours(9, 58, 0, 0);
+let currentFilter = 'all';
+
+const DEMO_USERS = [
+  { name: 'Ravi Kumar', email: 'ravi@foodrush.in', pw: 'staff123', role: 'Kitchen Staff', id: 'EMP001' },
+  { name: 'Priya M', email: 'priya@foodrush.in', pw: 'staff123', role: 'Delivery', id: 'EMP002' },
+];
+
+let orders = [];
+
+// ========== FIREBASE INIT ==========
+const firebaseConfig = {
+  apiKey: "AIzaSyBqAUfEuWOxlETjnKWQMkF9j9ZgKefHQ2k",
+  authDomain: "foodrush-9042e.firebaseapp.com",
+  projectId: "foodrush-9042e",
+  storageBucket: "foodrush-9042e.firebasestorage.app",
+  messagingSenderId: "235821438057",
+  appId: "1:235821438057:web:34d877a7d121da399e7ef8"
+};
+try { firebase.initializeApp(firebaseConfig); } catch(e) {}
+
+function startOrdersListener() {
+  try {
+    const db = firebase.firestore();
+    db.collection('orders')
+      .orderBy('createdAt', 'desc')
+      .limit(50)
+      .onSnapshot(snapshot => {
+        orders = snapshot.docs.map(doc => {
+          const d = doc.data();
+          const createdAt = d.createdAt?.toDate ? d.createdAt.toDate() : new Date();
+          const minutesAgo = Math.floor((Date.now() - createdAt.getTime()) / 60000);
+          return {
+            id: d.id || '#' + doc.id,
+            type: d.type || 'delivery',
+            customer: d.customerName || d.customer || 'Customer',
+            items: typeof d.items === 'string' ? d.items.split(', ') : (d.items || []),
+            status: d.status || 'new',
+            time: minutesAgo,
+            amount: d.amount || 0,
+            instructions: d.instructions || '',
+            rName: d.rName || '',
+          };
+        });
+        renderActiveDash();
+        renderOrders();
+        renderKDS();
+        const pending = orders.filter(o => o.status === 'new' || o.status === 'preparing').length;
+        document.getElementById('order-badge').textContent = pending;
+        document.getElementById('st-pending').textContent = pending;
+        if(pending > 0) showToast('🔔 ' + pending + ' orders pending!');
+      }, err => {
+        console.log('Firestore listen error:', err);
+      });
+  } catch(e) { console.log('Firebase error:', e); }
+}
+
+const STOCK_ITEMS = [
+  { name: 'Chicken', qty: '200g', level: 'critical' },
+  { name: 'Paneer', qty: '150g', level: 'critical' },
+  { name: 'Basmati Rice', qty: '1.2kg', level: 'low' },
+  { name: 'Sambar Powder', qty: '250g', level: 'low' },
+  { name: 'Coconut Chutney', qty: '400g', level: 'low' },
+  { name: 'Dosa Batter', qty: '5L', level: 'ok' },
+  { name: 'Filter Coffee Decoction', qty: '3L', level: 'ok' },
+  { name: 'Onions', qty: '4kg', level: 'ok' },
+  { name: 'Tomatoes', qty: '3kg', level: 'ok' },
+];
+
+const LEADERBOARD = [
+  { rank: 1, name: 'Ravi Kumar', role: 'Kitchen', orders: 72, avgTime: '16m', rating: 4.8, me: true },
+  { rank: 2, name: 'Anjali M', role: 'Kitchen', orders: 68, avgTime: '18m', rating: 4.7, me: false },
+  { rank: 3, name: 'Suresh K', role: 'Counter', orders: 61, avgTime: '14m', rating: 4.6, me: false },
+  { rank: 4, name: 'Priya M', role: 'Delivery', orders: 55, avgTime: '22m', rating: 4.9, me: false },
+];
+
+// ========== AUTH ==========
+function doEmpLogin() {
+  const email = document.getElementById('emp-email').value.trim();
+  const pw = document.getElementById('emp-pw').value;
+  const errEl = document.getElementById('login-error');
+  errEl.classList.remove('show');
+  const user = DEMO_USERS.find(u => u.email === email && u.pw === pw);
+  if (!user) { errEl.textContent = '❌ Wrong credentials. Try ravi@foodrush.in / staff123'; errEl.classList.add('show'); return; }
+  enterApp(user);
+}
+
+function demoLogin() {
+  document.getElementById('emp-email').value = 'ravi@foodrush.in';
+  document.getElementById('emp-pw').value = 'staff123';
+  setTimeout(doEmpLogin, 200);
+}
+
+function enterApp(user) {
+  empUser = user;
+  localStorage.setItem('fr_emp_session', JSON.stringify(user));
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('app-page').style.display = 'block';
+  document.getElementById('nav-avatar').textContent = user.name.charAt(0);
+  document.getElementById('nav-name').textContent = user.name.split(' ')[0];
+  document.getElementById('welcome-name').textContent = user.name.split(' ')[0];
+  document.getElementById('profile-avatar-big').textContent = user.name.charAt(0);
+  document.getElementById('profile-name-big').textContent = user.name;
+  document.getElementById('p-name').value = user.name;
+  document.getElementById('p-email').value = user.email;
+  const today = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  document.getElementById('today-date').textContent = today;
+  renderActiveDash();
+  renderOrders();
+  renderKDS();
+  renderStock();
+  renderLeaderboard();
+  startClock();
+  startOrdersListener();
+  showToast('Welcome, ' + user.name.split(' ')[0] + '! 🎉');
+}
+
+function doLogout() {
+  localStorage.removeItem('fr_emp_session');
+  location.reload();
+}
+
+// ========== NAVIGATION ==========
+function switchView(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  const navEl = document.getElementById('nav-' + view);
+  if (navEl) navEl.classList.add('active');
+}
+
+// ========== ORDERS ==========
+function renderActiveDash() {
+  const active = orders.filter(o => o.status === 'new' || o.status === 'preparing');
+  document.getElementById('active-tickets-dash').innerHTML = active.map(o => ticketHTML(o, true)).join('') || '<div style="color:var(--gray);padding:20px;text-align:center">✅ All clear! No pending orders.</div>';
+}
+
+function renderOrders() {
+  const filtered = currentFilter === 'all' ? orders : orders.filter(o => o.status === currentFilter);
+  document.getElementById('orders-list').innerHTML = filtered.map(o => ticketHTML(o, false)).join('') || '<div style="color:var(--gray);padding:40px;text-align:center">No orders in this category.</div>';
+}
+
+function filterOrders(f) {
+  currentFilter = f;
+  document.querySelectorAll('[id^=filter-]').forEach(b => b.style.borderColor = '');
+  document.querySelectorAll('[id^=filter-]').forEach(b => b.style.color = '');
+  const btn = document.getElementById('filter-' + f);
+  if (btn) { btn.style.borderColor = 'var(--orange)'; btn.style.color = 'var(--orange)'; }
+  renderOrders();
+}
+
+function ticketHTML(o, compact) {
+  const typeMap = { delivery: 'type-delivery', dinein: 'type-dinein', takeaway: 'type-takeaway' };
+  const typeLabel = { delivery: '🚴 Delivery', dinein: '🪑 Dine In', takeaway: '🥡 Takeaway' };
+  const statusMap = { new: 'status-new', preparing: 'status-preparing', ready: 'status-ready', delivered: 'status-delivered' };
+  const statusLabel = { new: '🆕 New', preparing: '🍳 Preparing', ready: '✅ Ready', delivered: '📦 Delivered' };
+  const urgent = o.time > 20;
+  let actions = '';
+  if (o.status === 'new') actions = `<button class="btn-ticket btn-accept" onclick="updateOrder('${o.id}','preparing')">Accept & Start</button>`;
+  else if (o.status === 'preparing') actions = `<button class="btn-ticket btn-done" onclick="updateOrder('${o.id}','ready')">Mark Ready ✓</button>`;
+  else if (o.status === 'ready') actions = `<button class="btn-ticket btn-ghost" onclick="updateOrder('${o.id}','delivered')">Handed Over</button>`;
+  return `<div class="ticket" id="ticket-${o.id.replace('#','')}">
+    <div class="ticket-head">
+      <span class="ticket-id">${o.id}</span>
+      <span class="ticket-type ${typeMap[o.type]}">${typeLabel[o.type]}</span>
+    </div>
+    <div class="ticket-items">${o.items.join('<br>')}</div>
+    <div class="ticket-meta">
+      <span class="ticket-time ${urgent ? 'urgent' : ''}">⏱ ${o.time} min${urgent ? ' ⚠️' : ''}</span>
+      <span class="ticket-customer">👤 ${o.customer}</span>
+      <span class="status-pill ${statusMap[o.status]}">${statusLabel[o.status]}</span>
+    </div>
+    ${!compact ? `<div class="ticket-actions">${actions}</div>` : ''}
+  </div>`;
+}
+
+function updateOrder(id, newStatus) {
+  const order = orders.find(o => o.id === id);
+  if (order) {
+    order.status = newStatus;
+    renderActiveDash();
+    renderOrders();
+    renderKDS();
+    document.getElementById('order-badge').textContent = orders.filter(o => o.status === 'new' || o.status === 'preparing').length;
+    const statusMsg = { preparing: '🍳 Order accepted & cooking!', ready: '✅ Order ready for pickup!', delivered: '📦 Order handed over!' };
+    showToast(statusMsg[newStatus]);
+    // Update in Firestore
+    try {
+      const db = firebase.firestore();
+      const docId = id.replace('#', '');
+      db.collection('orders').doc(docId).update({ status: newStatus });
+    } catch(e) { console.log('Firestore update error:', e); }
+  }
+}
+
+// ========== KDS ==========
+function renderKDS() {
+  const kdsOrders = orders.filter(o => o.status === 'new' || o.status === 'preparing');
+  document.getElementById('kds-count').textContent = kdsOrders.length;
+  const colors = { new: '#EEF2FF', preparing: '#FFFBEB' };
+  document.getElementById('kds-board').innerHTML = kdsOrders.map(o => `
+    <div style="background:${colors[o.status]||'#fff'};border:2px solid ${o.status==='new'?'#818CF8':'#FCD34D'};border-radius:14px;padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="font-family:var(--fh);font-size:16px;font-weight:800">${o.id}</span>
+        <span style="font-size:20px;font-weight:800;color:${o.time>20?'var(--red)':'var(--orange)'};font-family:var(--fh)">${o.time}m</span>
+      </div>
+      <div style="font-size:13px;margin-bottom:12px;line-height:1.8">${o.items.map(i=>`<div>• ${i}</div>`).join('')}</div>
+      <div style="font-size:12px;color:var(--gray);margin-bottom:10px">👤 ${o.customer}</div>
+      ${o.status==='new'
+        ? `<button onclick="updateOrder('${o.id}','preparing')" style="width:100%;padding:10px;background:var(--purple);color:#fff;border:none;border-radius:8px;font-family:var(--fh);font-size:13px;font-weight:700;cursor:pointer">▶ Start Cooking</button>`
+        : `<button onclick="updateOrder('${o.id}','ready')" style="width:100%;padding:10px;background:var(--green);color:#fff;border:none;border-radius:8px;font-family:var(--fh);font-size:13px;font-weight:700;cursor:pointer">✓ Mark Ready</button>`
+      }
+    </div>`).join('') || '<div style="color:var(--gray);padding:40px;text-align:center;grid-column:1/-1">✅ All orders done! Great work.</div>';
+}
+
+// ========== STOCK ==========
+function renderStock() {
+  const critEl = document.getElementById('critical-stock');
+  const lowEl = document.getElementById('low-stock');
+  const okEl = document.getElementById('ok-stock');
+  ['critical', 'low', 'ok'].forEach(lvl => {
+    const items = STOCK_ITEMS.filter(s => s.level === lvl);
+    const target = lvl === 'critical' ? critEl : lvl === 'low' ? lowEl : okEl;
+    target.innerHTML = items.map(s => `<div class="stock-card">
+      <div class="stock-indicator ${s.level}"></div>
+      <div class="stock-name">${s.name}</div>
+      <div class="stock-qty ${s.level}">${s.qty} left</div>
+      ${s.level !== 'ok' ? `<button class="btn-restock" onclick="reportStock('${s.name}')">Alert Manager</button>` : ''}
+    </div>`).join('');
+  });
+}
+
+function reportStock(name) {
+  showToast('📢 Manager alerted about low ' + name + '!');
+}
+
+// ========== LEADERBOARD ==========
+function renderLeaderboard() {
+  const rankClass = { 1: 'gold', 2: 'silver', 3: 'bronze' };
+  document.getElementById('lb-body').innerHTML = LEADERBOARD.map(e => `<tr style="${e.me ? 'background:#F5F3FF' : ''}">
+    <td><span class="lb-rank ${rankClass[e.rank]||''}">${e.rank === 1 ? '🥇' : e.rank === 2 ? '🥈' : e.rank === 3 ? '🥉' : e.rank}</span></td>
+    <td><div class="lb-emp">
+      <div class="lb-avatar" style="background:${e.me?'var(--purple)':'var(--orange-pale)'};color:${e.me?'#fff':'var(--orange)'}">${e.name.charAt(0)}</div>
+      ${e.name}${e.me ? ' <span style="font-size:11px;background:var(--purple);color:#fff;padding:2px 7px;border-radius:20px;font-weight:700">You</span>' : ''}
+    </div></td>
+    <td style="color:var(--gray)">${e.role}</td>
+    <td style="font-weight:600">${e.orders}</td>
+    <td>${e.avgTime}</td>
+    <td><div class="rating-bar"><div class="rating-fill" style="width:${e.rating/5*80}px"></div> <span style="font-size:13px;font-weight:600">${e.rating}</span></div></td>
+  </tr>`).join('');
+}
+
+// ========== SHIFT / CLOCK ==========
+let clockInterval;
+function startClock() {
+  clockInterval = setInterval(() => {
+    if (!onDuty) return;
+    const now = new Date();
+    const diff = now - clockInTime;
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    const pad = n => String(n).padStart(2, '0');
+    const clockEl = document.getElementById('live-clock');
+    if (clockEl) clockEl.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+    const hoursEl = document.getElementById('hours-done');
+    if (hoursEl) hoursEl.textContent = `${h}h ${m}m`;
+  }, 1000);
+}
+
+function toggleOnDuty() {
+  onDuty = !onDuty;
+  const badge = document.getElementById('shift-badge');
+  const btnText = document.getElementById('duty-btn-text');
+  const toggleBtn = document.getElementById('duty-toggle-btn');
+  const statusText = document.getElementById('shift-status-text');
+  if (onDuty) {
+    badge.className = 'shift-badge';
+    badge.textContent = '🟢 On Duty';
+    if (btnText) btnText.textContent = 'Go on Break';
+    if (toggleBtn) toggleBtn.textContent = 'Take a Break';
+    if (statusText) statusText.textContent = 'On Duty';
+    showToast('✅ Welcome back! Break ended.');
+  } else {
+    badge.className = 'shift-badge off';
+    badge.textContent = '☕ On Break';
+    if (btnText) btnText.textContent = 'Return to Duty';
+    if (toggleBtn) toggleBtn.textContent = 'End Break';
+    if (statusText) statusText.textContent = 'On Break';
+    showToast('☕ Enjoy your break!');
+  }
+}
+
+// ========== UTILS ==========
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁️'; }
+}
+
+function toggleDark() {
+  document.body.classList.toggle('dark');
+  showToast(document.body.classList.contains('dark') ? '🌙 Dark mode on' : '☀️ Light mode on');
+}
+
+let tTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(tTimer); tTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function saveProfile() {
+  showToast('✅ Profile saved!');
+}
+
+// ========== INIT ==========
+window.addEventListener('DOMContentLoaded', () => {
+  const session = localStorage.getItem('fr_emp_session');
+  if (session) {
+    try { enterApp(JSON.parse(session)); } catch(e) { localStorage.removeItem('fr_emp_session'); }
+  }
+});
+</script>
+</body>
+</html>
